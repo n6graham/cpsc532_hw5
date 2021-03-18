@@ -6,6 +6,8 @@ from pyrsistent import pmap,plist
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+
 #from primitives import PRIMITIVES
 
 
@@ -286,13 +288,63 @@ if __name__ == '__main__':
     run_deterministic_tests()
     #run_probabilistic_tests()
 
-    N = 100
+
+    '''
+
+    N = 1000
     
-    exp = daphne(['desugar-hoppl', '-i', '../../HW5/programs/1.daphne'])
 
+
+    # program 2
+
+    exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/1.daphne'])
+    print("\n running Program 2")
+    start = time.time()
     vals = [ evaluate(exp) for i in range(N) ]
+    end = time.time()
+
+    print("\n Program 2 mean: ", np.mean(samples))
+    print("\n Program 2 variance: ", np.var(samples))
+    print("\n Run time is: ", start-end)
+
+    plt.hist(vals)
+    plt.savefig('../HW5/tex/program2_hist.png')
 
 
+
+
+    # program 3
+
+    exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/2.daphne'])
+    print("\n running Program 3")
+    start = time.time()
+    vals = [ evaluate(exp) for i in range(N) ]
+    end = time.time()
+
+    print("\n Program 3 mean: ", np.mean(samples))
+    print("\n Program 3 variance: ", np.var(samples))
+    print("\n Run time is: ", start-end)
+
+    plt.hist(vals)
+    plt.savefig('../HW5/tex/program3_hist.png')
+
+
+
+    # program 4
+
+    exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/3.daphne'])
+    print("\n running Program 4")
+    start = time.time()
+    vals = [ evaluate(exp) for i in range(N) ]
+    end = time.time()
+    print("\n Program 4 mean: ", np.mean(samples))
+    print("\n Program 4 variance: ", np.var(samples))
+    print("\n Run time is: ", start-end)
+    
+    plt.hist(vals)
+    plt.savefig('../HW5/tex/program4_hist.png')
+
+    '''
 
     #for i in range(1,4):
     #    print(i)
