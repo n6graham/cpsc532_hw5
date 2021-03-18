@@ -19,7 +19,8 @@ class Env(dict):
     def find(self, var):
         "Find the innermost Env where var appears."
         return self if (var in self) else self.outer.find(var)
-
+    #def exists(self,var):
+    #    return 
 
 class Lambda(object):
     "A user-defined Scheme procedure."
@@ -27,7 +28,7 @@ class Lambda(object):
         self.parms, self.body, self.env = parms, body, env
     def __call__(self, *args): 
         print(self.body)
-        return [ evaluate(self.body, Env(self.parms, args, self.env)) , {}]
+        return evaluate(self.body, Env(self.parms, args, self.env)) 
         #return eval(self.body, {}, Env(self.parms, args, self.env))
 
 def standard_env() -> Env:
@@ -47,128 +48,143 @@ def standard_env() -> Env:
 
 def evaluate(ast, envr=None): #TODO: add sigma, or something
 
-    #print("ast is", ast)
-
-    #print(len(ast))
-
-    #print(type(ast))
-
-    #print(ast[0])
-
     alpha0 = '0' #default address
 
-
+    
     if envr is None:
         envr = standard_env()
 
 
+
+    print("output: ", envr.find)
     #print(envr)
 
-    #### not needed?
+    ### not needed ###
+
     #PROCS = {}
     #for i in range(len(ast)-1):
     #    proc = ast[i]
     #    proc_name, proc_arg_names, proc_expr = proc[1], proc[2], proc[3]
     #    PROCS[proc_name] = (proc_arg_names,proc_expr)
-    ####
+    
+    ### ### ### ###
 
 
+    def eval(expr, envr):
 
-
-    def eval(expr, sigma, envr):
-
-        #print("the current expr",expr)
-
+        print("the current expr",expr)
         #print("envr is: ", envr)
+        print("type is", type(expr))
         
         if is_const(expr, envr):
             if type(expr) in [int, float, bool]:
                 expr = torch.Tensor([expr]).squeeze()
-            return expr, sigma
+            return expr
 
-        elif is_var(expr, envr): #variable reference
-            return envr.find(expr)[expr], sigma
-            #return envr[expr], sigma
+        if type(expr) is str and expr != 'fn':    # variable reference
+            try:
+                return envr.find(expr)[expr]
+            except AttributeError:
+                return expr
+
+
+       # elif is_var(expr, envr): #variable reference
+       #     print("it is a var")
+       #     f = envr.find(expr)[expr]
+       #     print("we have: ", f)
+       #     return f
         
-        elif not isinstance(expr,list):
-            return expr, sigma
+        #elif not isinstance(expr,list):
+        #    return expr, 
 
         op, *args = expr
-
-
 
         if is_fn(op,envr):
             #print("op is:", op)
             #print("args is:", args)
             (params, body) = args
-            return Lambda(params,body,envr), sigma
+            local_env = Env(outer=envr)
+            return Lambda(params[1:],body,local_env)
 
         elif is_if(expr,envr):
             cond_expr, true_expr, false_expr = expr[1], expr[2], expr[3]
-            cond_value, sigma = eval(cond_expr, sigma, envr)
+            cond_value  = eval(cond_expr, envr)
             if cond_value:
-                return eval(true_expr, sigma, envr)
+                return eval(true_expr, envr)
             else:
-                return eval(false_expr, sigma, envr)
+                return eval(false_expr, envr)
 
 
         elif is_sample(expr,envr):
             dist_expr = expr[1]
-            dist_obj, sigma = eval(dist_expr,sigma,envr)
+            dist_obj = eval(dist_expr,envr)
             # return sample from distribution object
-            return dist_obj.sample(), sigma
+            return dist_obj.sample()
 
 
         elif is_observe(expr,envr):
             dist_expr, obs_expr = expr[1], expr[2]
-            dist_obj, sigma = eval(dist_expr,sigma,envr)
-            obs_value, sigma = eval(obs_expr,sigma,envr)
+            dist_obj = eval(dist_expr,envr)
+            obs_value = eval(obs_expr,envr)
             # update trace total likelihood for importance sampling
             #sigma['log_W'] = sigma['log_W'] + dist_obj.log_prob(obs_value)
-            return obs_value, sigma
+            return obs_value
             ## let no longer exists
 
 
        # elif is_let(expr, envr):
        #     var_name, sub_expr, final_expr = expr[1][0], expr[1][1], expr[2]
-       #     var_value, sigma = eval(sub_expr, sigma, envr)
-       #     return eval(final_expr, sigma, {**envr, var_name: var_value})
-        
+       #     var_value = eval(sub_expr, envr)
+       #     return eval(final_expr, {**envr, var_name: var_value})
+        #elif isinstance(op,Lambda):
+        #    proc=eval(op,envr)
+        #    print("proc: ", proc)
+        #    print(type(proc))
+        #    vals = [ eval(arg,envr) for arg in args]
+        #    return proc(*vals)
+
         else:
-            proc=eval(op,sigma,envr)[0]
-
-            print("proc: ", proc )
-            print(type(proc))
-            
-            if is_var(proc, envr): #variable reference
-                return envr.find(proc)[proc], sigma
-            elif is_const(proc, envr):
-                if type(proc) in [int, float, bool]:
-                    proc = torch.Tensor([proc]).squeeze()
-                return proc, sigma
-
-            vals = [ eval(arg,sigma,envr) for arg in args]
-            #print("vals: ", vals)
+            proc=eval(op,envr)
+            print("proc is", proc)
+            print("type is", type(proc))
+            push_address = envr.find("push-address")["push-address"](*args[0][1:])
+            trunc_args = args[1:]
+            vals = [ eval(arg,envr) for arg in trunc_args]
             return proc(*vals)
+            #print("proc: ", proc)
+            #print(type(proc))
+            
+
+            #if is_var(proc, envr): #variable reference
+            #    return envr.find(proc)[proc]
+            #elif is_const(proc, envr):
+            #    if type(proc) in [int, float, bool]:
+            #        proc = torch.Tensor([proc]).squeeze()
+            #    return proc
+
+            #vals = [ eval(arg,envr) for arg in args]
+            #print("vals: ", vals)
+            #return proc(*vals)
+            return 0
 
         #else:
         #    proc_name = expr[0]
         #    consts = []
         #    for i in range(1,len(expr)):
-        #        const, sigma = eval(expr[i],sigma,envr)
+        #        const = eval(expr[i],envr)
         #        consts.append(const)
         #    if proc_name in PROCS:
         #        proc_arg_names, proc_expr = PROCS[proc_name]
         #        new_envr = {**envr}
         #        for i, name in enumerate(proc_arg_names):
         #            new_envr[name] = consts[i]
-        #        return eval(proc_expr, sigma, new_envr)
+        #        return eval(proc_expr, new_envr)
         #    else:
-        #        #return PRIMITIVES[proc_name](*consts), sigma
-        #        return PRIMITIVES[proc_name](*consts), sigma
+        #        #return PRIMITIVES[proc_name](*consts)
+        #        return PRIMITIVES[proc_name](*consts)
 
     #give a start adderess
-    return eval([ast,alpha0],{'log_W': 0.},envr)            
+    return eval(ast,envr)('0')        
     #return eval(ast[-1], {'log_W': 0.}, {})
 
 def is_const(expr, envr):
@@ -178,8 +194,10 @@ def is_const(expr, envr):
     #return type(expr) not in [tuple,list,dict] and expr not in PRIMITIVES and expr not in envr
     return type(expr) not in [tuple,list,dict] and expr not in envr
 
-def is_var(expr, envr):
-    return type(expr) not in [tuple,list,dict] and expr in envr
+#def is_var(expr, envr):
+    #return type(expr) not in [tuple,list,dict] and expr in 
+#    return type(expr) not in [tuple,list,dict] and expr in envr
+
 def is_let(expr, envr):
     return expr[0] == "let"
 def is_if(expr, envr):
@@ -351,3 +369,125 @@ if __name__ == '__main__':
     #    exp = daphne(['desugar-hoppl', '-i', '../../HW5/programs/{}.daphne'.format(i)])
     #    print('\n\n\nSample of prior of program {}:'.format(i))
     #    print(evaluate(exp))        
+
+
+
+'''
+def evaluate(ast, envr=None): #TODO: add sigma, or something
+
+
+    alpha0 = '0' #default address
+
+
+    if envr is None:
+        envr = standard_env()
+
+    #print(envr)
+
+    #### not needed?
+    #PROCS = {}
+    #for i in range(len(ast)-1):
+    #    proc = ast[i]
+    #    proc_name, proc_arg_names, proc_expr = proc[1], proc[2], proc[3]
+    #    PROCS[proc_name] = (proc_arg_names,proc_expr)
+    ####
+
+
+
+
+    def eval(expr, sigma, envr):
+
+        #print("the current expr",expr)
+
+        #print("envr is: ", envr)
+        
+        if is_const(expr, envr):
+            if type(expr) in [int, float, bool]:
+                expr = torch.Tensor([expr]).squeeze()
+            return expr, sigma
+
+        elif is_var(expr, envr): #variable reference
+            return envr.find(expr)[expr], sigma
+            #return envr[expr], sigma
+        
+        elif not isinstance(expr,list):
+            return expr, sigma
+
+        op, *args = expr
+
+
+
+        if is_fn(op,envr):
+            #print("op is:", op)
+            #print("args is:", args)
+            (params, body) = args
+            return Lambda(params,body,envr), sigma
+
+        elif is_if(expr,envr):
+            cond_expr, true_expr, false_expr = expr[1], expr[2], expr[3]
+            cond_value, sigma = eval(cond_expr, sigma, envr)
+            if cond_value:
+                return eval(true_expr, sigma, envr)
+            else:
+                return eval(false_expr, sigma, envr)
+
+
+        elif is_sample(expr,envr):
+            dist_expr = expr[1]
+            dist_obj, sigma = eval(dist_expr,sigma,envr)
+            # return sample from distribution object
+            return dist_obj.sample(), sigma
+
+
+        elif is_observe(expr,envr):
+            dist_expr, obs_expr = expr[1], expr[2]
+            dist_obj, sigma = eval(dist_expr,sigma,envr)
+            obs_value, sigma = eval(obs_expr,sigma,envr)
+            # update trace total likelihood for importance sampling
+            #sigma['log_W'] = sigma['log_W'] + dist_obj.log_prob(obs_value)
+            return obs_value, sigma
+            ## let no longer exists
+
+
+       # elif is_let(expr, envr):
+       #     var_name, sub_expr, final_expr = expr[1][0], expr[1][1], expr[2]
+       #     var_value, sigma = eval(sub_expr, sigma, envr)
+       #     return eval(final_expr, sigma, {**envr, var_name: var_value})
+        
+        else:
+            proc=eval(op,sigma,envr)[0]
+
+            print("proc: ", proc )
+            print(type(proc))
+            
+            if is_var(proc, envr): #variable reference
+                return envr.find(proc)[proc], sigma
+            elif is_const(proc, envr):
+                if type(proc) in [int, float, bool]:
+                    proc = torch.Tensor([proc]).squeeze()
+                return proc, sigma
+
+            vals = [ eval(arg,sigma,envr) for arg in args]
+            #print("vals: ", vals)
+            return proc(*vals)
+
+        #else:
+        #    proc_name = expr[0]
+        #    consts = []
+        #    for i in range(1,len(expr)):
+        #        const, sigma = eval(expr[i],sigma,envr)
+        #        consts.append(const)
+        #    if proc_name in PROCS:
+        #        proc_arg_names, proc_expr = PROCS[proc_name]
+        #        new_envr = {**envr}
+        #        for i, name in enumerate(proc_arg_names):
+        #            new_envr[name] = consts[i]
+        #        return eval(proc_expr, sigma, new_envr)
+        #    else:
+        #        #return PRIMITIVES[proc_name](*consts), sigma
+        #        return PRIMITIVES[proc_name](*consts), sigma
+
+    #give a start adderess
+    return eval([ast,alpha0],{'log_W': 0.},envr)            
+    #return eval(ast[-1], {'log_W': 0.}, {})
+'''
