@@ -6,6 +6,7 @@ from pyrsistent import pmap,plist
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+#from primitives import PRIMITIVES
 
 
 class Env(dict):
@@ -23,51 +24,43 @@ class Lambda(object):
     def __init__(self, parms, body, env):
         self.parms, self.body, self.env = parms, body, env
     def __call__(self, *args): 
-        return eval(self.body, Env(self.parms, args, self.env))
+        print(self.body)
+        return [ evaluate(self.body, Env(self.parms, args, self.env)) , {}]
+        #return eval(self.body, {}, Env(self.parms, args, self.env))
 
 def standard_env() -> Env:
-    "An environment with some Scheme standard procedures."
     env = Env()
-    env = env.update(pmap(penv)) #primitive env
-    #env = pmap(penv) #primitive env
-    #env = env.update({'alpha' : ''})
+    env.update(pmap(penv))
+    #print(env.update(penv)) #primitive env
+    #env = env.update(pmap(penv)) #primitive env
+    print("env is ", env)
     return env
 
 
 
-
+    #env = pmap(penv) #primitive env
+    #env = env.update({'alpha' : ''})
 
 
 
 def evaluate(ast, envr=None): #TODO: add sigma, or something
 
-    print("ast is", ast)
+    #print("ast is", ast)
 
-    print(len(ast))
+    #print(len(ast))
 
-    print(type(ast))
+    #print(type(ast))
 
-    print(ast[0])
+    #print(ast[0])
 
     alpha0 = '0' #default address
 
-    newast = [ast,alpha0]
-
-    print(len(newast))
-
-    ast.append(alpha0)
-
-    print(ast)
-
-    print(newast)
-
-    print(newast[0])
-
-    print(newast[1])
 
     if envr is None:
         envr = standard_env()
 
+
+    #print(envr)
 
     #### not needed?
     #PROCS = {}
@@ -81,6 +74,10 @@ def evaluate(ast, envr=None): #TODO: add sigma, or something
 
 
     def eval(expr, sigma, envr):
+
+        #print("the current expr",expr)
+
+        #print("envr is: ", envr)
         
         if is_const(expr, envr):
             if type(expr) in [int, float, bool]:
@@ -88,16 +85,21 @@ def evaluate(ast, envr=None): #TODO: add sigma, or something
             return expr, sigma
 
         elif is_var(expr, envr): #variable reference
-            return envr[expr], sigma
+            return envr.find(expr)[expr], sigma
+            #return envr[expr], sigma
         
-        elif not isinstance(expr,List):
-            return expr
+        elif not isinstance(expr,list):
+            return expr, sigma
 
         op, *args = expr
 
+
+
         if is_fn(op,envr):
+            #print("op is:", op)
+            #print("args is:", args)
             (params, body) = args
-            return Lambda(params,body,envr)
+            return Lambda(params,body,envr), sigma
 
         elif is_if(expr,envr):
             cond_expr, true_expr, false_expr = expr[1], expr[2], expr[3]
@@ -131,8 +133,20 @@ def evaluate(ast, envr=None): #TODO: add sigma, or something
        #     return eval(final_expr, sigma, {**envr, var_name: var_value})
         
         else:
-            proc=eval(op,envr)
-            vals = [eval(arg, envr) for arg in args]
+            proc=eval(op,sigma,envr)[0]
+
+            print("proc: ", proc )
+            print(type(proc))
+            
+            if is_var(proc, envr): #variable reference
+                return envr.find(proc)[proc], sigma
+            elif is_const(proc, envr):
+                if type(proc) in [int, float, bool]:
+                    proc = torch.Tensor([proc]).squeeze()
+                return proc, sigma
+
+            vals = [ eval(arg,sigma,envr) for arg in args]
+            #print("vals: ", vals)
             return proc(*vals)
 
         #else:
@@ -152,11 +166,16 @@ def evaluate(ast, envr=None): #TODO: add sigma, or something
         #        return PRIMITIVES[proc_name](*consts), sigma
 
     #give a start adderess
-    return eval([ast,alpha0],envr)            
+    return eval([ast,alpha0],{'log_W': 0.},envr)            
     #return eval(ast[-1], {'log_W': 0.}, {})
 
 def is_const(expr, envr):
-    return type(expr) not in [tuple,list,dict] and expr not in PRIMITIVES and expr not in envr
+    print("here:",expr)
+    print(type(expr))
+    #print("envr is: ",envr)
+    #return type(expr) not in [tuple,list,dict] and expr not in PRIMITIVES and expr not in envr
+    return type(expr) not in [tuple,list,dict] and expr not in envr
+
 def is_var(expr, envr):
     return type(expr) not in [tuple,list,dict] and expr in envr
 def is_let(expr, envr):
@@ -169,9 +188,7 @@ def is_observe(expr, envr):
     return expr[0] == "observe"
 
 def is_fn(expr,envr):
-    return expr[0] == "fn"
-
-
+    return expr == "fn"
 
 
 def get_stream(exp):
@@ -181,7 +198,7 @@ def get_stream(exp):
 
 def run_deterministic_tests():
     
-    '''
+    
     for i in range(1,14):
 
         exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/tests/deterministic/test_{}.daphne'.format(i)])
@@ -189,14 +206,28 @@ def run_deterministic_tests():
         
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
         ret = evaluate(exp)
+
+        print("ret", ret)
+
+        rett = ret[0]
+
+        print("rett", rett)
+        
+        print("return value", rett('0'))
+
+        print("truth", truth)
+
+        '''
         try:
             assert(is_tol(ret, truth))
         except:
             raise AssertionError('return value {} is not equal to truth {} for exp {}'.format(ret,truth,exp))
         
+        '''
+
         print('FOPPL Tests passed')
 
-    ''' 
+    
 
     for i in range(1,13):
 
@@ -209,18 +240,18 @@ def run_deterministic_tests():
         truth = load_truth('programs/tests/hoppl-deterministic/test_{}.truth'.format(i))
         ret = evaluate(exp)
 
-        print(ret)
-        print(truth)
+        print("return value", ret)
+        print("truth", truth)
 
-        '''
-        try:
-            assert(is_tol(ret, truth))
-        except:
-            raise AssertionError('return value {} is not equal to truth {} for exp {}'.format(ret,truth,exp))
+        
+        #try:
+        #    assert(is_tol(ret, truth))
+        #except:
+        #    raise AssertionError('return value {} is not equal to truth {} for exp {}'.format(ret,truth,exp))
         
         print('Test passed')
         
-        '''
+        
 
     print('All deterministic tests passed')
     
@@ -254,7 +285,14 @@ if __name__ == '__main__':
     
     run_deterministic_tests()
     #run_probabilistic_tests()
+
+    N = 100
     
+    exp = daphne(['desugar-hoppl', '-i', '../../HW5/programs/1.daphne'])
+
+    vals = [ evaluate(exp) for i in range(N) ]
+
+
 
     #for i in range(1,4):
     #    print(i)
