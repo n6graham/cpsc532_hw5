@@ -1,0 +1,187 @@
+
+ [
+    'fn',
+
+    ['alpha'], 
+    
+    [
+        
+        '+', 
+        
+        ['push-address', 'alpha', 'addr0'],
+        
+        7,
+        
+        [
+            # lambda x: x * x
+            [
+                
+                'fn',
+                
+                ['alpha', 'x'], 
+                
+                ['*', ['push-address', 'alpha', 'addr2'], 'x', 'x']
+            
+            ], 
+            
+            [
+                
+                'push-address', 
+                
+                'alpha',
+                
+                'addr1'
+            
+            ],
+            
+            # map(lambda x: x * x, 8)
+            8
+        
+        ]
+    
+    ]
+ 
+ ] 
+
+
+
+
+
+
+
+
+
+ ['fn', ['alpha'], ['+', ['push-address', 'alpha', 'addr0'], 5, 2]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['sqrt', ['push-address', 'alpha', 'addr0'], 2]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['*', ['push-address', 'alpha', 'addr0'], 3.0, 8.0]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['/', ['push-address', 'alpha', 'addr0'], 2, 8]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['/', ['push-address', 'alpha', 'addr0'], 2, ['+', ['push-address', 'alpha', 'addr1'], 3, ['*', ['push-address', 'alpha', 'addr2'], 3, 2.7]]]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['vector', ['push-address', 'alpha', 'addr0'], 2, 3, 4, 5]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['get', ['push-address', 'alpha', 'addr0'], ['vector', ['push-address', 'alpha', 'addr1'], 2, 3, 4, 5], 2]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['put', ['push-address', 'alpha', 'addr0'], ['vector', ['push-address', 'alpha', 'addr1'], 2, 3, 4, 5], 2, 3]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['first', ['push-address', 'alpha', 'addr0'], ['vector', ['push-address', 'alpha', 'addr1'], 2, 3, 4, 5]]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['last', ['push-address', 'alpha', 'addr0'], ['vector', ['push-address', 'alpha', 'addr1'], 2, 3, 4, 5]]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['append', ['push-address', 'alpha', 'addr0'], ['vector', ['push-address', 'alpha', 'addr1'], 2, 3, 4, 5], 3.14]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['get', ['push-address', 'alpha', 'addr0'], ['hash-map', ['push-address', 'alpha', 'addr1'], 6, 5.3, 1, 3.2], 6]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['put', ['push-address', 'alpha', 'addr0'], ['hash-map', ['push-address', 'alpha', 'addr1'], 6.0, 5.3, 1.0, 3.2], 6.0, 2.0]] 
+ 
+
+FOPPL Tests passed
+
+ 
+ ['fn', ['alpha'], ['+', ['push-address', 'alpha', 'addr0'], 7, [['fn', ['alpha', 'x'], ['*', ['push-address', 'alpha', 'addr2'], 'x', 'x']], ['push-address', 'alpha', 'addr1'], 8]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'f'], ['f', ['push-address', 'alpha', 'addr1']]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha'], 89]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'f'], ['f', ['push-address', 'alpha', 'addr1'], ['vector', ['push-address', 'alpha', 'addr2'], 5, 6], 1]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha', 'col', 'i'], ['get', ['push-address', 'alpha', 'addr3'], 'col', 'i']]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'col'], [['fn', ['alpha', 'f'], [['fn', ['alpha', '_'], ['f', ['push-address', 'alpha', 'addr3'], '"a"']], ['push-address', 'alpha', 'addr2'], ['put', ['push-address', 'alpha', 'addr4'], 'col', '"a"', 7]]], ['push-address', 'alpha', 'addr1'], ['fn', ['alpha', 'x'], ['get', ['push-address', 'alpha', 'addr5'], 'col', 'x']]]], ['push-address', 'alpha', 'addr0'], ['hash-map', ['push-address', 'alpha', 'addr6'], '"a"', 1, '"b"', 2]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'col1'], [['fn', ['alpha', 'col2'], [['fn', ['alpha', 'v1'], [['fn', ['alpha', 'v2'], ['vector', ['push-address', 'alpha', 'addr4'], 'v1', 'v2']], ['push-address', 'alpha', 'addr3'], ['get', ['push-address', 'alpha', 'addr5'], 'col2', 1]]], ['push-address', 'alpha', 'addr2'], ['+', ['push-address', 'alpha', 'addr6'], 1, ['get', ['push-address', 'alpha', 'addr7'], 'col2', 1]]]], ['push-address', 'alpha', 'addr1'], ['vector', ['push-address', 'alpha', 'addr8'], ['get', ['push-address', 'alpha', 'addr9'], 'col1', 0], ['+', ['push-address', 'alpha', 'addr10'], ['get', ['push-address', 'alpha', 'addr11'], 'col1', 1], 1], 10]]], ['push-address', 'alpha', 'addr0'], ['vector', ['push-address', 'alpha', 'addr12'], 7, 8, 9]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'map1'], [['fn', ['alpha', 'map2'], ['get', ['push-address', 'alpha', 'addr2'], 'map1', '"a"']], ['push-address', 'alpha', 'addr1'], ['hash-map', ['push-address', 'alpha', 'addr3'], '"a"', [1, ['push-address', 'alpha', 'addr4'], ['get', ['push-address', 'alpha', 'addr5'], 'map1', '"a"']]]]], ['push-address', 'alpha', 'addr0'], ['hash-map', ['push-address', 'alpha', 'addr6'], '"a"', 1, '"b"', 2, '"c"', 3]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'm'], [['m', ['push-address', 'alpha', 'addr2'], 1], ['push-address', 'alpha', 'addr1'], 2]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha', 'x'], ['if', ['>', ['push-address', 'alpha', 'addr3'], 0, 'x'], ['fn', ['alpha', 'y'], ['+', ['push-address', 'alpha', 'addr4'], 1, 'y']], ['fn', ['alpha', 'z'], ['+', ['push-address', 'alpha', 'addr5'], 2, 'z']]]]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'm'], [['fn', ['alpha', 'v'], [['fn', ['alpha', 'f'], [['fn', ['alpha', 'n'], [['fn', ['alpha', 'w'], ['vector', ['push-address', 'alpha', 'addr5'], ['f', ['push-address', 'alpha', 'addr6'], 1], ['get', ['push-address', 'alpha', 'addr7'], 'm', '"b"'], ['get', ['push-address', 'alpha', 'addr8'], 'w', 1]]], ['push-address', 'alpha', 'addr4'], 'v']], ['push-address', 'alpha', 'addr3'], 'm']], ['push-address', 'alpha', 'addr2'], ['fn', ['alpha', 'x'], ['+', ['push-address', 'alpha', 'addr9'], ['+', ['push-address', 'alpha', 'addr10'], 'x', ['get', ['push-address', 'alpha', 'addr11'], 'm', '"b"']], ['get', ['push-address', 'alpha', 'addr12'], 'v', 1]]]]], ['push-address', 'alpha', 'addr1'], ['vector', ['push-address', 'alpha', 'addr13'], 7, 8, 9]]], ['push-address', 'alpha', 'addr0'], ['hash-map', ['push-address', 'alpha', 'addr14'], '"a"', 1, '"b"', 2, '"c"', 3]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'add'], [['fn', ['alpha', 'a'], ['-', ['push-address', 'alpha', 'addr2'], 'a', 1]], ['push-address', 'alpha', 'addr1'], ['add', ['push-address', 'alpha', 'addr3'], 2, 3]]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha', 'a', 'b'], [['fn', ['alpha', 'a', 'b', 'add'], ['+', ['push-address', 'alpha', 'addr5'], 'a', 'b']], ['push-address', 'alpha', 'addr4'], 'a', 'b', ['fn', ['alpha', 'a', 'b', 'add'], ['+', ['push-address', 'alpha', 'addr6'], 'a', 'b']]]]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'fac'], ['fac', ['push-address', 'alpha', 'addr1'], 5]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha', 'n'], [['fn', ['alpha', 'n', 'fac'], ['if', ['<', ['push-address', 'alpha', 'addr3'], 'n', 2], 1, ['*', ['push-address', 'alpha', 'addr4'], 'n', ['fac', ['push-address', 'alpha', 'addr5'], ['-', ['push-address', 'alpha', 'addr6'], 'n', 1], 'fac']]]], ['push-address', 'alpha', 'addr2'], 'n', ['fn', ['alpha', 'n', 'fac'], ['if', ['<', ['push-address', 'alpha', 'addr7'], 'n', 2], 1, ['*', ['push-address', 'alpha', 'addr8'], 'n', ['fac', ['push-address', 'alpha', 'addr9'], ['-', ['push-address', 'alpha', 'addr10'], 'n', 1], 'fac']]]]]]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'reduce'], ['reduce', ['push-address', 'alpha', 'addr1'], '+', 0, ['vector', ['push-address', 'alpha', 'addr2'], 1, 2, 3]]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha', 'f', 'x', 'values'], [['fn', ['alpha', 'f', 'x', 'values', 'reduce'], ['if', ['empty?', ['push-address', 'alpha', 'addr4'], 'values'], 'x', ['reduce', ['push-address', 'alpha', 'addr5'], 'f', ['f', ['push-address', 'alpha', 'addr6'], 'x', ['first', ['push-address', 'alpha', 'addr7'], 'values']], ['rest', ['push-address', 'alpha', 'addr8'], 'values'], 'reduce']]], ['push-address', 'alpha', 'addr3'], 'f', 'x', 'values', ['fn', ['alpha', 'f', 'x', 'values', 'reduce'], ['if', ['empty?', ['push-address', 'alpha', 'addr9'], 'values'], 'x', ['reduce', ['push-address', 'alpha', 'addr10'], 'f', ['f', ['push-address', 'alpha', 'addr11'], 'x', ['first', ['push-address', 'alpha', 'addr12'], 'values']], ['rest', ['push-address', 'alpha', 'addr13'], 'values'], 'reduce']]]]]]] 
+ 
+
+
+ 
+ ['fn', ['alpha'], [['fn', ['alpha', 'map'], ['map', ['push-address', 'alpha', 'addr1'], ['fn', ['alpha', 'y'], ['+', ['push-address', 'alpha', 'addr2'], 1, 'y']], ['vector', ['push-address', 'alpha', 'addr3'], 1, 2, 3]]], ['push-address', 'alpha', 'addr0'], ['fn', ['alpha', 'f', 'values'], [['fn', ['alpha', 'f', 'values', 'map'], ['if', ['empty?', ['push-address', 'alpha', 'addr5'], 'values'], ['vector', ['push-address', 'alpha', 'addr6']], ['conj', ['push-address', 'alpha', 'addr7'], ['map', ['push-address', 'alpha', 'addr8'], 'f', ['rest', ['push-address', 'alpha', 'addr9'], 'values'], 'map'], ['f', ['push-address', 'alpha', 'addr10'], ['first', ['push-address', 'alpha', 'addr11'], 'values']]]]], ['push-address', 'alpha', 'addr4'], 'f', 'values', ['fn', ['alpha', 'f', 'values', 'map'], ['if', ['empty?', ['push-address', 'alpha', 'addr12'], 'values'], ['vector', ['push-address', 'alpha', 'addr13']], ['conj', ['push-address', 'alpha', 'addr14'], ['map', ['push-address', 'alpha', 'addr15'], 'f', ['rest', ['push-address', 'alpha', 'addr16'], 'values'], 'map'], ['f', ['push-address', 'alpha', 'addr17'], ['first', ['push-address', 'alpha', 'addr18'], 'values']]]]]]]]] 

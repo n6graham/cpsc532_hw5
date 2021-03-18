@@ -66,6 +66,9 @@ def evaluate_program(ast):
                 return eval(proc_expr, sigma, new_scope)
             else:
                 return PRIMITIVES[proc_name](*consts), sigma
+
+
+                
     return eval(ast[-1], {'log_W': 0.}, {})
 
 

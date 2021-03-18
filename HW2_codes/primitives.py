@@ -4,6 +4,10 @@ from collections.abc import Iterable
 import torch.distributions as dist
 
 
+class Lambda():
+    
+
+
 
 class Normal(dist.Normal):
     
