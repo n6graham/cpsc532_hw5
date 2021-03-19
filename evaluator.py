@@ -59,7 +59,7 @@ def standard_env() -> Env:
 
 def eval(expr, envr):
 
-        print("the current expr",expr)
+        #print("the current expr",expr)
 
         #print("type is", type(expr))
         
@@ -99,6 +99,17 @@ def eval(expr, envr):
 
         op, *args = expr
 
+        '''
+        if op == 'get':
+            print("\n get has arguments:", args)
+
+        if op == 'peek':
+            name = args[1]
+            print("\n peek has arguments:", args)
+            print("\n name is:", name)
+            print (envr.find(name)[name])
+        '''
+
         #print("op is ", op)
         #print("args is ", args)
 
@@ -130,31 +141,35 @@ def eval(expr, envr):
             #dist_expr = expr[1]
             dist_expr = args[1]
             dist_obj = eval(dist_expr,envr)
-            #print(dist_obj)
+            s = dist_obj.sample()
+            print("\n \n \n sample value: ",s)
+            #print("sample value shape: ",s.shape)
             # return sample from distribution object
-            return dist_obj.sample()
+            return s
 
 
         #elif is_observe(expr,envr):
         elif is_observe(expr,envr):
-            #dist_expr, obs_expr = expr[1], expr[2]
-            dist_expr, obs_expr = args[1], args[2]
-            dist_obj = eval(dist_expr,envr)
-            obs_value = eval(obs_expr,envr)
-            # update trace total likelihood for importance sampling
-            #sigma['log_W'] = sigma['log_W'] + dist_obj.log_prob(obs_value)
-            return obs_value
+                            #dist_expr, obs_expr = expr[1], expr[2]
+            #dist_expr, obs_expr = args[1], args[2]
+            #dist_obj = eval(dist_expr,envr)
+            #obs_value = eval(obs_expr,envr)
+                            # update trace total likelihood for importance sampling
+                            #sigma['log_W'] = sigma['log_W'] + dist_obj.log_prob(obs_value)
+            return eval(args[-1],envr)
+            #return obs_value
             ## let no longer exists
 
 
         else:
             proc=eval(op,envr)
-            if type(proc) is str:
-                print("proc is", proc)
+            #print("op is", op)
+            #if type(proc) is str:
+                #print("proc is", proc)
             #print("type is", type(proc))
             vals = [ eval(arg,envr) for arg in args]
-            print("proc is", proc)
-            print("vals are", vals)
+            #print("proc is", proc)
+            #print("vals are", vals)
             return proc(*vals)
             #print("proc: ", proc)
             #print(type(proc))

@@ -70,6 +70,7 @@ def sqrt(alpha,a):
 def tanh(alpha,a):
     return torch.tanh(a)
 def first(alpha,data):
+    print("\n getting first of ", data)
     return data[0]
 def second(alpha,data):
     return data[1]
@@ -79,21 +80,33 @@ def last(alpha,data):
     return data[-1]
 def nth(alpha,data, index):
     return data[index]
+
+
 def conj(alpha,data, el):
     if len(el.shape) == 0: el = el.reshape(1)
     return torch.cat([data, el], dim=0)
 
+
+# two versions of conj
+
+#version 1
+
+'''
 def conj(addr, v, c):
     return torch.cat((c.unsqueeze(dim=0), v), dim=0)
+'''
+
 
 def cons(alpha,data, el):
     if len(el.shape) == 0: el = el.reshape(1)
     return torch.cat([el, data], dim=0)
 
-def append(addr,data,el):
-    if len(el.shape) == 0: el = el.reshape(1)
-    return torch.cat([data, el], dim=0)
+#def append(addr,data,el):
+#    if len(el.shape) == 0: el = el.reshape(1)
+#    return torch.cat([data, el], dim=0)
 
+def append(addr,v, c):
+    return torch.cat((v, c.unsqueeze(dim=0)), dim=0)
 
 
 #not sure how I should add address here, figure out later    
@@ -112,6 +125,29 @@ def vector(alpha,*args):
         else:
             return [arg for arg in args]
     raise Exception(f'Type of args {args} could not be recognized.')
+
+
+'''
+def vector(*args):
+    # sniff test: if what is inside isn't int,float,or tensor return normal list
+    if type(args[0]) not in [int, float, torch.Tensor]:
+        return [arg for arg in args]
+    # if tensor dimensions are same, return stacked tensor
+    if type(args[0]) is torch.Tensor:
+        sizes = list(filter(lambda arg: arg.shape == args[0].shape, args))
+        if len(sizes) == len(args):
+            return torch.stack(args)
+        else:
+            return [arg for arg in args]
+    raise Exception(f'Type of args {args} could not be recognized.')
+'''
+
+
+
+
+
+
+
 def hashmap(alpha,*args):
     result, i = {}, 0
     while i<len(args):
@@ -123,12 +159,22 @@ def hashmap(alpha,*args):
     return result
 
 
+
+def get(addr, v, i):
+    if type(i) is str:
+        return v[i]
+    return v[int(i.item())]
+
+'''
 def get(addr,struct, index):
+    print("struct ", struct)
     if type(index) is torch.Tensor:
         index = index.item()
     if type(struct) in [torch.Tensor, list, tuple]:
         index = int(index)
     return struct[index]
+'''
+
 def put(addr,struct, index, value):
     if type(index) is torch.Tensor:
         index = int(index.item())
@@ -137,6 +183,7 @@ def put(addr,struct, index, value):
     result = deepcopy(struct)
     result[index] = value
     return result
+
 def bernoulli(addr,p, obs=None):
     return torch.distributions.Bernoulli(p)
 def beta(addr,alpha, beta, obs=None):
@@ -177,11 +224,22 @@ def emp(addr,x):
     return len(x) ==0
 
 def peek(addr,x):
-    print("\n \n x is", x)
-    print(type(x))
-    #print(len(x))
+    print("calling peek on: ", x)
     return x[-1]
+    '''
+    try:
+        len(x)  
+        return x[-1]
+    except:
+        x = [x]
+        return x[-1]
+    '''
+    #print("\n \n x is", x)
+    #print(type(x))
+    #print(len(x))
 
+    #return x[-1]
+#
 
 
 
@@ -205,7 +263,8 @@ env = {
         "append": append,
         "and": compare_and,
         "or": compare_or,
-        "conj": conj,
+        "conj":append,
+        #"conj": conj,
         "cons": cons,
         "vector": vector,
         "hash-map": hashmap,
