@@ -5,7 +5,6 @@ import torch.distributions as dist
 
 
 class Lambda():
-    
 
 
 

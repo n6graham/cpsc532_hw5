@@ -68,7 +68,7 @@ def evaluate_program(ast):
                 return PRIMITIVES[proc_name](*consts), sigma
 
 
-                
+
     return eval(ast[-1], {'log_W': 0.}, {})
 
 
@@ -144,6 +144,7 @@ def run_probabilistic_tests():
 def print_tensor(tensor):
     tensor = np.round(tensor.numpy(), decimals=3)
     print(tensor)
+
 
         
 if __name__ == '__main__':

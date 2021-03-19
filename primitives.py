@@ -43,6 +43,10 @@ def push_addr(alpha, value):
 
 
 
+def log(alpha,a):
+    return torch.log(a)
+
+
 def add(alpha,a,b):
     return torch.add(a,b)
 def subtract(alpha,a,b):
@@ -50,7 +54,7 @@ def subtract(alpha,a,b):
 def multiply(alpha,a,b):
     return torch.multiply(a,b)
 def divide(alpha,a,b):
-    return torch.divide(alpha,a,b)
+    return torch.divide(a,b)
 def gt(alpha,a,b):
     return torch.Tensor([a>b])
 def lt(alpha,a,b):
@@ -78,14 +82,26 @@ def nth(alpha,data, index):
 def conj(alpha,data, el):
     if len(el.shape) == 0: el = el.reshape(1)
     return torch.cat([data, el], dim=0)
+
+def conj(addr, v, c):
+    return torch.cat((c.unsqueeze(dim=0), v), dim=0)
+
 def cons(alpha,data, el):
     if len(el.shape) == 0: el = el.reshape(1)
     return torch.cat([el, data], dim=0)
 
+def append(addr,data,el):
+    if len(el.shape) == 0: el = el.reshape(1)
+    return torch.cat([data, el], dim=0)
+
+
 
 #not sure how I should add address here, figure out later    
-def vector(*args):
+def vector(alpha,*args):
     # sniff test: if what is inside isn't int,float,or tensor return normal list
+    print("in vector, args is:", args)
+    if len(args) == 0:
+        return torch.tensor([])
     if type(args[0]) not in [int, float, torch.Tensor]:
         return [arg for arg in args]
     # if tensor dimensions are same, return stacked tensor
@@ -96,7 +112,7 @@ def vector(*args):
         else:
             return [arg for arg in args]
     raise Exception(f'Type of args {args} could not be recognized.')
-def hashmap(*args):
+def hashmap(alpha,*args):
     result, i = {}, 0
     while i<len(args):
         key, value  = args[i], args[i+1]
@@ -157,6 +173,16 @@ def repmat(addr,tensor, size1, size2):
 def matmul(addr,t1, t2):
     return t1.matmul(t2)
 
+def emp(addr,x):
+    return len(x) ==0
+
+def peek(addr,x):
+    print("\n \n x is", x)
+    print(type(x))
+    #print(len(x))
+    return x[-1]
+
+
 
 
 env = {
@@ -175,7 +201,8 @@ env = {
         "rest": rest,
         "last": last,
         "nth": nth,
-        "append": conj,
+        #"append": conj,
+        "append": append,
         "and": compare_and,
         "or": compare_or,
         "conj": conj,
@@ -189,6 +216,7 @@ env = {
         "beta": beta,
         "normal": normal,
         "uniform": uniform,
+        'uniform-continuous':uniform,
         "exponential": exponential,
         "discrete": discrete,
         "gamma": gamma,
@@ -199,6 +227,9 @@ env = {
         "mat-tanh": tanh,
         "mat-repmat": repmat,
         "mat-mul": matmul,
+        "empty?":emp,
+        "peek":peek,
+        "log":log
         #"if": lambda cond, v1, v2: v1 if cond else v2 # for graph based sampling
     }
 

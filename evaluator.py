@@ -1,3 +1,4 @@
+from os import environ
 from typing import AsyncIterable
 from primitives import env as penv
 from daphne import daphne
@@ -7,6 +8,10 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import copy
+import sys
+
+sys.setrecursionlimit(5000)
 
 #from primitives import PRIMITIVES
 
@@ -16,19 +21,27 @@ class Env(dict):
     def __init__(self, parms=(), args=(), outer=None):
         self.update(zip(parms, args))
         self.outer = outer
+        #if outer is not None:
+        #    self.outer = copy.deepcopy(outer)
     def find(self, var):
         "Find the innermost Env where var appears."
         return self if (var in self) else self.outer.find(var)
+    def check_in_env(self, var):
+        return (var in self) or (var in self.outer)
     #def exists(self,var):
     #    return 
 
 class Lambda(object):
     "A user-defined Scheme procedure."
     def __init__(self, parms, body, env):
+        #print("body of lambda",body)
+        #print("params of lambda",parms)
         self.parms, self.body, self.env = parms, body, env
-    def __call__(self, *args): 
-        print(self.body)
-        return evaluate(self.body, Env(self.parms, args, self.env)) 
+    def __call__(self, *args):
+        #print("body of lambda",self.body)
+        #print("type is", type(self.body))
+        #print("args of lambda",args)
+        return eval(self.body, Env(self.parms, args, self.env)) 
         #return eval(self.body, {}, Env(self.parms, args, self.env))
 
 def standard_env() -> Env:
@@ -36,7 +49,7 @@ def standard_env() -> Env:
     env.update(pmap(penv))
     #print(env.update(penv)) #primitive env
     #env = env.update(pmap(penv)) #primitive env
-    print("env is ", env)
+    #print("env is ", env)
     return env
 
 
@@ -44,46 +57,33 @@ def standard_env() -> Env:
     #env = pmap(penv) #primitive env
     #env = env.update({'alpha' : ''})
 
-
-
-def evaluate(ast, envr=None): #TODO: add sigma, or something
-
-    alpha0 = '0' #default address
-
-    
-    if envr is None:
-        envr = standard_env()
-
-
-
-    print("output: ", envr.find)
-    #print(envr)
-
-    ### not needed ###
-
-    #PROCS = {}
-    #for i in range(len(ast)-1):
-    #    proc = ast[i]
-    #    proc_name, proc_arg_names, proc_expr = proc[1], proc[2], proc[3]
-    #    PROCS[proc_name] = (proc_arg_names,proc_expr)
-    
-    ### ### ### ###
-
-
-    def eval(expr, envr):
+def eval(expr, envr):
 
         print("the current expr",expr)
-        #print("envr is: ", envr)
-        print("type is", type(expr))
+
+        #print("type is", type(expr))
         
-        if is_const(expr, envr):
-            if type(expr) in [int, float, bool]:
-                expr = torch.Tensor([expr]).squeeze()
+        if type(expr) is torch.Tensor:
             return expr
 
-        if type(expr) is str and expr != 'fn':    # variable reference
+
+        if is_const(expr, envr):
+            #print("we have a constant")
+            if type(expr) in [int, float, bool]:
+                expr = torch.Tensor([expr]).squeeze()
+            elif type(expr) is torch.Tensor:
+                return expr
+            return expr
+
+        #print("type is", type(expr))
+
+
+        if type(expr) is str: # and expr != 'fn':    # variable reference
+            #print("we have a string")
             try:
-                return envr.find(expr)[expr]
+                f = envr.find(expr)[expr]
+                #print("f is: ", f)
+                return f
             except AttributeError:
                 return expr
 
@@ -99,31 +99,46 @@ def evaluate(ast, envr=None): #TODO: add sigma, or something
 
         op, *args = expr
 
+        #print("op is ", op)
+        #print("args is ", args)
+
         if is_fn(op,envr):
-            #print("op is:", op)
-            #print("args is:", args)
             (params, body) = args
             local_env = Env(outer=envr)
-            return Lambda(params[1:],body,local_env)
+            lam = Lambda(params,body,local_env)
+            #lam = Lambda(params,body,envr)
+            #print("lambda result is:", lam)
+            return lam
 
+        #elif is_if(expr,envr):
         elif is_if(expr,envr):
-            cond_expr, true_expr, false_expr = expr[1], expr[2], expr[3]
-            cond_value  = eval(cond_expr, envr)
-            if cond_value:
-                return eval(true_expr, envr)
-            else:
-                return eval(false_expr, envr)
+            #cond_expr, true_expr, false_expr = expr[1], expr[2], expr[3]
+            cond_expr, true_expr, false_expr = args[0], args[1], args[2]
+            tf = eval(cond_expr,envr)
+            #print("true/false is", tf)
+            res = (true_expr if tf else false_expr)
+            return eval(res,envr)
+            #cond_value  = eval(cond_expr, envr)
+            #if cond_value:
+            #    return eval(true_expr, envr)
+            #else:
+            #    return eval(false_expr, envr)
 
 
+        #elif is_sample(expr,envr):
         elif is_sample(expr,envr):
-            dist_expr = expr[1]
+            #dist_expr = expr[1]
+            dist_expr = args[1]
             dist_obj = eval(dist_expr,envr)
+            #print(dist_obj)
             # return sample from distribution object
             return dist_obj.sample()
 
 
+        #elif is_observe(expr,envr):
         elif is_observe(expr,envr):
-            dist_expr, obs_expr = expr[1], expr[2]
+            #dist_expr, obs_expr = expr[1], expr[2]
+            dist_expr, obs_expr = args[1], args[2]
             dist_obj = eval(dist_expr,envr)
             obs_value = eval(obs_expr,envr)
             # update trace total likelihood for importance sampling
@@ -132,74 +147,40 @@ def evaluate(ast, envr=None): #TODO: add sigma, or something
             ## let no longer exists
 
 
-       # elif is_let(expr, envr):
-       #     var_name, sub_expr, final_expr = expr[1][0], expr[1][1], expr[2]
-       #     var_value = eval(sub_expr, envr)
-       #     return eval(final_expr, {**envr, var_name: var_value})
-        #elif isinstance(op,Lambda):
-        #    proc=eval(op,envr)
-        #    print("proc: ", proc)
-        #    print(type(proc))
-        #    vals = [ eval(arg,envr) for arg in args]
-        #    return proc(*vals)
-
         else:
             proc=eval(op,envr)
+            if type(proc) is str:
+                print("proc is", proc)
+            #print("type is", type(proc))
+            vals = [ eval(arg,envr) for arg in args]
             print("proc is", proc)
-            print("type is", type(proc))
-            push_address = envr.find("push-address")["push-address"](*args[0][1:])
-            trunc_args = args[1:]
-            vals = [ eval(arg,envr) for arg in trunc_args]
+            print("vals are", vals)
             return proc(*vals)
             #print("proc: ", proc)
             #print(type(proc))
             
 
-            #if is_var(proc, envr): #variable reference
-            #    return envr.find(proc)[proc]
-            #elif is_const(proc, envr):
-            #    if type(proc) in [int, float, bool]:
-            #        proc = torch.Tensor([proc]).squeeze()
-            #    return proc
 
-            #vals = [ eval(arg,envr) for arg in args]
-            #print("vals: ", vals)
-            #return proc(*vals)
-            return 0
+def evaluate(ast, envr=None): 
+    if envr is None:
+        envr = standard_env()
 
-        #else:
-        #    proc_name = expr[0]
-        #    consts = []
-        #    for i in range(1,len(expr)):
-        #        const = eval(expr[i],envr)
-        #        consts.append(const)
-        #    if proc_name in PROCS:
-        #        proc_arg_names, proc_expr = PROCS[proc_name]
-        #        new_envr = {**envr}
-        #        for i, name in enumerate(proc_arg_names):
-        #            new_envr[name] = consts[i]
-        #        return eval(proc_expr, new_envr)
-        #    else:
-        #        #return PRIMITIVES[proc_name](*consts)
-        #        return PRIMITIVES[proc_name](*consts)
-
-    #give a start adderess
-    return eval(ast,envr)('0')        
+   
+    return eval([ast,'0'],envr) 
     #return eval(ast[-1], {'log_W': 0.}, {})
 
 def is_const(expr, envr):
-    print("here:",expr)
-    print(type(expr))
+    #print("inside is_const",expr)
+    #print(type(expr))
     #print("envr is: ",envr)
     #return type(expr) not in [tuple,list,dict] and expr not in PRIMITIVES and expr not in envr
-    return type(expr) not in [tuple,list,dict] and expr not in envr
+    return type(expr) not in [tuple,list,dict,str] and expr not in envr
 
 #def is_var(expr, envr):
     #return type(expr) not in [tuple,list,dict] and expr in 
 #    return type(expr) not in [tuple,list,dict] and expr in envr
 
-def is_let(expr, envr):
-    return expr[0] == "let"
+
 def is_if(expr, envr):
     return expr[0] == "if"
 def is_sample(expr, envr):
@@ -218,56 +199,58 @@ def get_stream(exp):
 
 def run_deterministic_tests():
     
-    
+    '''
     for i in range(1,14):
 
         exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/tests/deterministic/test_{}.daphne'.format(i)])
-        print("\n \n", exp, "\n \n")
+        
+        #print("foppl deterministic test {} \n \n".format(i), "\n")
+        print("foppl deterministic test {} \n \n".format(i))
+
+        
+        #print("\n \n", exp, "\n \n")
         
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
         ret = evaluate(exp)
 
-        print("ret", ret)
+        #print("ret: ", ret)
 
-        rett = ret[0]
+        #print("truth: ", truth)
 
-        print("rett", rett)
         
-        print("return value", rett('0'))
-
-        print("truth", truth)
-
-        '''
         try:
             assert(is_tol(ret, truth))
         except:
             raise AssertionError('return value {} is not equal to truth {} for exp {}'.format(ret,truth,exp))
         
-        '''
+        
 
-        print('FOPPL Tests passed')
-
+    print('FOPPL Tests passed')
     
+    '''
 
-    for i in range(1,13):
+    #for i in range(1,13):
+    for i in range(7,13):
+
 
         exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/tests/hoppl-deterministic/test_{}.daphne'.format(i)])
         
         
-        print("hoppl deterministic test {} \n \n".format(i), exp, "\n \n")
+        
+        print("hoppl deterministic test {} \n \n".format(i), "\n")
 
         
         truth = load_truth('programs/tests/hoppl-deterministic/test_{}.truth'.format(i))
         ret = evaluate(exp)
 
-        print("return value", ret)
-        print("truth", truth)
+        #print("return value", ret)
+        #print("truth", truth)
 
         
-        #try:
-        #    assert(is_tol(ret, truth))
-        #except:
-        #    raise AssertionError('return value {} is not equal to truth {} for exp {}'.format(ret,truth,exp))
+        try:
+            assert(is_tol(ret, truth))
+        except:
+            raise AssertionError('return value {} is not equal to truth {} for exp {}'.format(ret,truth,exp))
         
         print('Test passed')
         
@@ -286,8 +269,13 @@ def run_probabilistic_tests():
     num_samples=1e4
     max_p_value = 1e-2
     
-    for i in range(1,7):
+    #for i in range(1,7):
+    for i in range(5,7):
+
         exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/tests/probabilistic/test_{}.daphne'.format(i)])
+        
+        print("probabilistic test {} \n \n".format(i), "\n")
+        
         truth = load_truth('programs/tests/probabilistic/test_{}.truth'.format(i))
         
         stream = get_stream(exp)
@@ -296,6 +284,7 @@ def run_probabilistic_tests():
         
         print('p value', p_val)
         assert(p_val > max_p_value)
+
     
     print('All probabilistic tests passed')    
 
@@ -303,16 +292,18 @@ def run_probabilistic_tests():
 
 if __name__ == '__main__':
     
-    run_deterministic_tests()
+    #run_deterministic_tests()
+
+
     #run_probabilistic_tests()
 
 
-    '''
-
-    N = 1000
     
 
+    N = 10
+    
 
+    '''
     # program 2
 
     exp = daphne(['desugar-hoppl', '-i', '../HW5/programs/1.daphne'])
@@ -321,14 +312,14 @@ if __name__ == '__main__':
     vals = [ evaluate(exp) for i in range(N) ]
     end = time.time()
 
-    print("\n Program 2 mean: ", np.mean(samples))
-    print("\n Program 2 variance: ", np.var(samples))
+    print("\n Program 2 mean: ", np.mean(vals))
+    print("\n Program 2 variance: ", np.var(vals))
     print("\n Run time is: ", start-end)
 
     plt.hist(vals)
     plt.savefig('../HW5/tex/program2_hist.png')
 
-
+    
 
 
     # program 3
@@ -339,14 +330,15 @@ if __name__ == '__main__':
     vals = [ evaluate(exp) for i in range(N) ]
     end = time.time()
 
-    print("\n Program 3 mean: ", np.mean(samples))
-    print("\n Program 3 variance: ", np.var(samples))
+    print("\n Program 3 mean: ", np.mean(vals))
+    print("\n Program 3 variance: ", np.var(vals))
     print("\n Run time is: ", start-end)
 
     plt.hist(vals)
     plt.savefig('../HW5/tex/program3_hist.png')
 
 
+    '''
 
     # program 4
 
@@ -355,12 +347,14 @@ if __name__ == '__main__':
     start = time.time()
     vals = [ evaluate(exp) for i in range(N) ]
     end = time.time()
-    print("\n Program 4 mean: ", np.mean(samples))
-    print("\n Program 4 variance: ", np.var(samples))
+    print("\n Program 4 mean: ", np.mean(vals))
+    print("\n Program 4 variance: ", np.var(vals))
     print("\n Run time is: ", start-end)
     
     plt.hist(vals)
     plt.savefig('../HW5/tex/program4_hist.png')
+
+    '''
 
     '''
 
