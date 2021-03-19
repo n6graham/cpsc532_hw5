@@ -70,7 +70,6 @@ def sqrt(alpha,a):
 def tanh(alpha,a):
     return torch.tanh(a)
 def first(alpha,data):
-    print("\n getting first of ", data)
     return data[0]
 def second(alpha,data):
     return data[1]
@@ -82,11 +81,9 @@ def nth(alpha,data, index):
     return data[index]
 
 
-def conj(alpha,data, el):
-    if len(el.shape) == 0: el = el.reshape(1)
-    return torch.cat([data, el], dim=0)
-
-
+#def conj(alpha,data, el):
+#    if len(el.shape) == 0: el = el.reshape(1)
+#    return torch.cat([data, el], dim=0)
 # two versions of conj
 
 #version 1
@@ -97,13 +94,17 @@ def conj(addr, v, c):
 '''
 
 
-def cons(alpha,data, el):
-    if len(el.shape) == 0: el = el.reshape(1)
-    return torch.cat([el, data], dim=0)
+#def cons(alpha,data, el):
+#    if len(el.shape) == 0: el = el.reshape(1)
+#    return torch.cat([el, data], dim=0)
 
 #def append(addr,data,el):
 #    if len(el.shape) == 0: el = el.reshape(1)
 #    return torch.cat([data, el], dim=0)
+
+def conj(alpha,v, c):
+    return torch.cat((c.unsqueeze(dim=0), v), dim=0)
+
 
 def append(addr,v, c):
     return torch.cat((v, c.unsqueeze(dim=0)), dim=0)
@@ -112,7 +113,7 @@ def append(addr,v, c):
 #not sure how I should add address here, figure out later    
 def vector(alpha,*args):
     # sniff test: if what is inside isn't int,float,or tensor return normal list
-    print("in vector, args is:", args)
+    #print("in vector, args is:", args)
     if len(args) == 0:
         return torch.tensor([])
     if type(args[0]) not in [int, float, torch.Tensor]:
@@ -125,24 +126,6 @@ def vector(alpha,*args):
         else:
             return [arg for arg in args]
     raise Exception(f'Type of args {args} could not be recognized.')
-
-
-'''
-def vector(*args):
-    # sniff test: if what is inside isn't int,float,or tensor return normal list
-    if type(args[0]) not in [int, float, torch.Tensor]:
-        return [arg for arg in args]
-    # if tensor dimensions are same, return stacked tensor
-    if type(args[0]) is torch.Tensor:
-        sizes = list(filter(lambda arg: arg.shape == args[0].shape, args))
-        if len(sizes) == len(args):
-            return torch.stack(args)
-        else:
-            return [arg for arg in args]
-    raise Exception(f'Type of args {args} could not be recognized.')
-'''
-
-
 
 
 
@@ -224,22 +207,8 @@ def emp(addr,x):
     return len(x) ==0
 
 def peek(addr,x):
-    print("calling peek on: ", x)
     return x[-1]
-    '''
-    try:
-        len(x)  
-        return x[-1]
-    except:
-        x = [x]
-        return x[-1]
-    '''
-    #print("\n \n x is", x)
-    #print(type(x))
-    #print(len(x))
 
-    #return x[-1]
-#
 
 
 
@@ -263,9 +232,9 @@ env = {
         "append": append,
         "and": compare_and,
         "or": compare_or,
-        "conj":append,
-        #"conj": conj,
-        "cons": cons,
+        "conj":append, #use for program 3 (appending)
+        #"conj": conj, #unit test 12 (prepending)
+        #"cons": cons,
         "vector": vector,
         "hash-map": hashmap,
         "list": list,
